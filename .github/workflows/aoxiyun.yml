@@ -259,14 +259,17 @@ jobs:
             echo "🟢 无变化，无需提交"
           fi
 
-  clean_runs:
-    name: 清理历史运行记录
-    runs-on: ubuntu-latest
-    needs: sync
-    steps:
-      - name: 清理工作流运行记录
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          retain_days: 0
-          keep_minimum_runs: 0
+clean_runs:
+  name: 清理历史运行记录
+  runs-on: ubuntu-latest
+  needs: sync
+  # 添加以下 permissions 配置
+  permissions:
+    actions: write  # 授予管理 Actions（包括删除运行记录）的写入权限
+  steps:
+    - name: 清理工作流运行记录
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}  # 此token现在将具有actions: write权限
+        retain_days: 0
+        keep_minimum_runs: 0
