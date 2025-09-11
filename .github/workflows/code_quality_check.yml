@@ -1,0 +1,78 @@
+name: Code Quality Check for aoxi-package
+
+on:
+  push:
+    branches: [ "master" ]    # 当推送到 master 分支时触发
+  pull_request:
+    branches: [ "master" ]    # 当向 master 分支提交 PR 时触发
+  schedule:
+    - cron: '0 0 * * 1'       # 每周一 UTC 时间 0 点运行一次（可选）
+  workflow_dispatch:          # 允许手动触发
+
+jobs:
+  code-quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install basic dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck  # 安装 Shell 脚本检查工具
+
+    - name: Check for shell script syntax errors
+      run: |
+        find . -name '*.sh' -type f | while read -r file; do
+          echo "Checking $file..."
+          shellcheck "$file" || true  # 即使发现错误也不终止流程，继续检查下一个
+        done
+
+    - name: Check for YAML syntax errors (if any)
+      run: |
+        find . -name '*.yml' -o -name '*.yaml' | while read -r file; do
+          echo "Checking $file..."
+          python -c "import yaml; yaml.safe_load(open('$file'))" || true
+        done
+
+    - name: Check Makefile syntax (basic)
+      run: |
+        if [ -f "Makefile" ]; then
+          echo "Checking Makefile..."
+          make -n || true  # 试运行 Makefile，不实际执行
+        fi
+
+    - name: Check for common issues in patches
+      run: |
+        # 检查补丁文件的行尾符（针对你之前遇到的问题）
+        find . -name '*.patch' -o -name '*.diff' | while read -r file; do
+          echo "Checking line endings in $file..."
+          # 检测是否包含 CRLF（Windows 行尾符）
+          if grep -qU $'\r' "$file"; then
+            echo "::warning file=$file,title=Line ending issue::Found CRLF line endings in patch file. Consider converting to LF."
+          fi
+        done
+
+    - name: Check file permissions
+      run: |
+        # 检查脚本文件是否具有可执行权限
+        find . -name '*.sh' -type f | while read -r file; do
+          if [ ! -x "$file" ]; then
+            echo "::warning file=$file,title=Permission issue::Shell script is not executable. Consider 'chmod +x $file'"
+          fi
+        done
+
+    # 你可以根据需要添加更多的检查步骤
+    # - name: Another check
+    #   run: |
+
+    - name: Summarize issues (if any)
+      run: |
+        echo "Code quality check completed. Review any warnings or errors above."
+        echo "For shell script issues, consider installing 'shellcheck' locally for detailed feedback."
