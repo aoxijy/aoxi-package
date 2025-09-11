@@ -9,6 +9,9 @@ on:
     paths:
       - '.github/workflows/sync.yml'
 
+permissions:
+  contents: write  # 授予写入仓库内容的权限
+
 jobs:
   sync:
     name: 同步到 master 分支
@@ -64,7 +67,10 @@ jobs:
             "taskd": "https://github.com/aoxijy/aoxi-package",
             "luci-app-npc": "https://github.com/aoxijy/aoxi-package",
             "luci-app-shutdown": "https://github.com/aoxijy/aoxi-package",
-            "luci-app-vlmcsd": "https://github.com/DokiDuck/luci-app-vlmcsd"
+            "luci-app-vlmcsd": "https://github.com/DokiDuck/luci-app-vlmcsd",
+            "luci-app-nikki": "https://github.com/db-one/dbone-packages 23.05",
+            "luci-app-ssr-plus": "https://github.com/db-one/dbone-packages 23.05",
+            "luci-app-passwall": "https://github.com/db-one/dbone-packages 23.05"
           }'
           
           SUBDIRS_JSON='{
@@ -80,7 +86,10 @@ jobs:
             "taskd": "taskd",
             "luci-app-npc": "luci-app-npc",
             "luci-app-shutdown": "luci-app-shutdown",
-            "luci-app-vlmcsd": "luci-app-vlmcsd"
+            "luci-app-vlmcsd": "luci-app-vlmcsd",
+            "luci-app-nikki": "OpenWrt-nikki",
+            "luci-app-ssr-plus": "helloworld",
+            "luci-app-passwall": "passwall"
           }'
           
           SYNC_RECORD=".sync-record-master"
