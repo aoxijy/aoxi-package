@@ -41,9 +41,13 @@ jobs:
         SYNC_RECORD=".sync-record-master"
         if [ ! -f "$SYNC_RECORD" ]; then
           echo "{}" > "$SYNC_RECORD"
+          echo "创建了新的同步记录文件"
+        else
+          echo "使用现有的同步记录文件"
         fi
+        ls -la
 
-    - name: 同步插件仓库
+    - name: 增量同步仓库
       env:
         REPOS_JSON: '{
           "luci-app-argon-config": "https://github.com/jerrykuku/luci-app-argon-config",
@@ -82,105 +86,142 @@ jobs:
           "luci-app-passwall": "passwall"
         }'
       run: |
+        echo "当前工作目录: $(pwd)"
+        
+        # 设置变量
+        SYNC_RECORD=".sync-record-master"
+        TEMP_RECORD="${SYNC_RECORD}.tmp"
+        
         # 创建临时目录
         mkdir -p sync_temp
         cd sync_temp
+        echo "进入sync_temp目录: $(pwd)"
         
-        # 解析JSON配置
+        # 将环境变量中的JSON写入临时文件
         echo "$REPOS_JSON" > repos.json
         echo "$SUBDIRS_JSON" > subdirs.json
         
-        # 读取同步记录
-        SYNC_RECORD="../.sync-record-master"
+        # 检查JSON文件是否有效
+        if ! jq empty repos.json 2>/dev/null; then
+          echo "错误: REPOS_JSON 不是有效的JSON格式"
+          exit 1
+        fi
+        if ! jq empty subdirs.json 2>/dev/null; then
+          echo "错误: SUBDIRS_JSON 不是有效的JSON格式"
+          exit 1
+        fi
+        
+        # 读取同步记录（注意路径：同步记录文件在仓库根目录，所以使用../）
         declare -A last_commits
-        if [ -f "$SYNC_RECORD" ]; then
+        if [ -f "../$SYNC_RECORD" ]; then
+          echo "读取同步记录文件: ../$SYNC_RECORD"
           while IFS= read -r line; do
             if [[ -n "$line" && "$line" =~ ^([^[:space:]]+)[[:space:]]+(.+)$ ]]; then
               repo="${BASH_REMATCH[1]}"
               commit="${BASH_REMATCH[2]}"
               last_commits["$repo"]="$commit"
+              echo "从记录加载: $repo = $commit"
             fi
-          done < "$SYNC_REPORT"
+          done < "../$SYNC_RECORD"
+        else
+          echo "同步记录文件不存在，将创建新文件"
         fi
         
-        # 创建临时记录文件
-        TEMP_RECORD="${SYNC_RECORD}.tmp"
-        > "$TEMP_RECORD"
+        # 创建临时同步记录文件
+        > "../$TEMP_RECORD"
         
-        # 处理每个仓库
-        for plugin in $(jq -r 'keys[]' repos.json); do
+        # 获取插件列表
+        mapfile -t plugins < <(jq -r 'keys[]' repos.json)
+        echo "需要处理的插件列表: ${plugins[*]}"
+        
+        # 遍历插件
+        for plugin in "${plugins[@]}"; do
+          echo "🔁 开始处理插件: $plugin"
+          
+          # 获取仓库URL和分支
           repo_info=$(jq -r ".\"$plugin\"" repos.json)
           url=$(echo "$repo_info" | awk '{print $1}')
           branch=$(echo "$repo_info" | awk '{if (NF>1) print $2}')
           
+          # 获取子目录
           subdir=$(jq -r ".\"$plugin\"" subdirs.json)
           
-          echo "处理插件: $plugin"
-          echo "仓库地址: $url"
-          echo "分支: ${branch:-默认分支}"
-          echo "子目录: $subdir"
+          echo "   URL: $url"
+          echo "   分支: ${branch:-默认分支}"
+          echo "   子目录: $subdir"
           
-          # 获取最新提交哈希
+          # 获取远程最新提交
           if [ -n "$branch" ]; then
-            latest_commit=$(git ls-remote "$url" "refs/heads/$branch" | awk '{print $1}')
+            remote_commit=$(git ls-remote "$url" "refs/heads/$branch" | awk '{print $1}')
           else
-            latest_commit=$(git ls-remote "$url" HEAD | awk '{print $1}')
+            remote_commit=$(git ls-remote "$url" HEAD | awk '{print $1}')
           fi
           
-          if [ -z "$latest_commit" ]; then
-            echo "无法获取最新提交，跳过 $plugin"
+          if [ -z "$remote_commit" ]; then
+            echo "❌ 无法获取远程仓库最新提交，跳过 $plugin"
+            # 保留原有记录（如果存在）
+            if [ -n "${last_commits[$plugin]:-}" ]; then
+              echo "$plugin ${last_commits[$plugin]}" >> "../$TEMP_RECORD"
+            fi
             continue
           fi
           
-          last_commit="${last_commits[$plugin]}"
+          local_commit="${last_commits[$plugin]:-}"
           
           # 检查是否需要更新
-          if [ "$last_commit" != "$latest_commit" ] || [ -z "$last_commit" ]; then
-            echo "发现更新: $plugin (${last_commit:0:7} -> ${latest_commit:0:7})"
+          if [ "$local_commit" != "$remote_commit" ] || [ -z "$local_commit" ]; then
+            echo "🔄 发现更新: $plugin (${local_commit:0:7} -> ${remote_commit:0:7})"
+            
+            # 清理旧目录
+            if [ -d "../$plugin" ]; then
+              echo "   清理旧目录: ../$plugin"
+              rm -rf "../$plugin"
+            fi
             
             # 克隆仓库
-            clone_cmd="git clone --depth 1"
+            clone_cmd="git clone --quiet --depth 1"
             if [ -n "$branch" ]; then
               clone_cmd="$clone_cmd -b $branch"
             fi
             clone_cmd="$clone_cmd \"$url\" \"$plugin-temp\""
             
+            echo "   执行克隆命令: $clone_cmd"
             if eval $clone_cmd; then
               # 提取指定子目录
               if [ -d "$plugin-temp/$subdir" ]; then
-                rm -rf "../$plugin"
+                echo "   提取子目录: $subdir"
                 mkdir -p "../$plugin"
                 cp -r "$plugin-temp/$subdir/"* "../$plugin/"
               else
-                echo "警告: 子目录 $subdir 不存在，使用根目录"
-                rm -rf "../$plugin"
-                mv "$plugin-temp" "../$plugin"
+                echo "⚠️  子目录 $subdir 不存在，使用根目录"
+                mkdir -p "../$plugin"
+                cp -r "$plugin-temp/"* "../$plugin/" 2>/dev/null || true
               fi
               
-              # 清理.git目录
-              rm -rf "../$plugin/.git"
+              # 清理临时文件
+              rm -rf "$plugin-temp"
               echo "✅ $plugin 同步完成"
             else
               echo "❌ $plugin 克隆失败"
             fi
-            
-            # 清理临时文件
-            rm -rf "$plugin-temp"
           else
             echo "✅ $plugin 已是最新，跳过"
           fi
           
           # 记录最新提交
-          echo "$plugin $latest_commit" >> "$TEMP_RECORD"
+          echo "$plugin $remote_commit" >> "../$TEMP_RECORD"
         done
         
         # 更新同步记录
-        mv "$TEMP_RECORD" "$SYNC_RECORD"
+        mv "../$TEMP_RECORD" "../$SYNC_RECORD"
         cd ..
+        echo "同步完成，返回根目录: $(pwd)"
 
     - name: 提交更改
       run: |
+        echo "检查是否有更改需要提交..."
         if [ -n "$(git status --porcelain)" ]; then
+          echo "发现更改，准备提交"
           git add .
           git commit -m "🔄 自动同步插件 ($(date '+%Y-%m-%d %H:%M:%S'))"
           git push origin master
