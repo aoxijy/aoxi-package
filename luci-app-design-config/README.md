@@ -1,8 +1,8 @@
 <div align="center">
-  </a><a href="https://github.com/xuanranran/luci-app-design-config/releases">
-    <img src="https://img.shields.io/github/release/xuanranran/luci-app-design-config.svg?style=flat">
-  </a><a href="hhttps://github.com/xuanranran/luci-app-design-config/releases">
-    <img src="https://img.shields.io/github/downloads/xuanranran/luci-app-design-config/total?style=flat">
+  </a><a href="https://github.com/gngpp/luci-app-design-config/releases">
+    <img src="https://img.shields.io/github/release/gngpp/luci-app-design-config.svg?style=flat">
+  </a><a href="hhttps://github.com/gngpp/luci-app-design-config/releases">
+    <img src="https://img.shields.io/github/downloads/gngpp/luci-app-design-config/total?style=flat">
   </a>
 </div>
 <br>
@@ -18,7 +18,7 @@ Design Theme Config Plugin
 ### Compile
 
 ```
-git clone https://github.com/xuanranran/luci-app-design-config.git package/luci-app-design-config
+git clone https://github.com/gngpp/luci-app-design-config.git package/luci-app-design-config
 make menuconfig # choose LUCI->Applications->luci-app-design-config
 make V=s
 ```
