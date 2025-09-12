@@ -9,8 +9,8 @@ PKG_VERSION:=0.26.26
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/yisier/nps/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=29da044262071a1fa53ce7169c6427ee4f12fc0ada60ef7fb52fabfd165afe91
+PKG_SOURCE_URL:=https://codeload.github.com/yisier/nps/tar.gz/v0.26.26
+PKG_HASH:=1c73f9cdf54c1ae12dd1c58e43d7e6402a19ae11fe92dc6b77f0ffb6b101a066
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILE:=LICENSE
