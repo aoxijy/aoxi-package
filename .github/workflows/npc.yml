@@ -101,6 +101,16 @@ jobs:
           FORCE=1 ./scripts/feeds update -a
           FORCE=1 ./scripts/feeds install libc
 
+      - name: Download nps source manually (Fix for 404 error)
+        run: |
+          cd openwrt-sdk
+          mkdir -p dl
+          echo "Manual downloading nps source to avoid 404..."
+          # 使用正确的URL手动下载源码包
+          wget -O dl/nps-0.26.26.tar.gz https://github.com/yisier/nps/archive/refs/tags/v0.26.26.tar.gz
+          # 验证哈希值（确保与你的 Makefile 中的 PKG_HASH 一致）
+          echo "1c73f9cdf54c1ae12dd1c58e43d7e6402a19ae11fe92dc6b77f0ffb6b101a066  dl/nps-0.26.26.tar.gz" | sha256sum -c -
+
       - name: Configure build (with FORCE=1)
         run: |
           cd openwrt-sdk
