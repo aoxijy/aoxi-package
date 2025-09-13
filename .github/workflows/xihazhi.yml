@@ -172,6 +172,91 @@ jobs:
           
           echo "Final configuration:"
           grep -E "(CONFIG_TARGET|CONFIG_PACKAGE)" .config
+      - name: Examine nps source structure
+        run: |
+          cd openwrt-sdk
+          echo "Checking the structure of the downloaded nps source..."
+          # 解压下载的源码包到临时目录进行检查
+          mkdir -p /tmp/nps-inspect
+          tar -xzf dl/nps-0.26.26.tar.gz -C /tmp/nps-inspect
+          
+          echo "Contents of the extracted nps-0.26.26 directory:"
+          find /tmp/nps-inspect -name "*.go" -type f | head -20 # 查找Go文件
+          echo "--- Top level directories ---"
+          ls -la /tmp/nps-inspect
+          # 尝试找到常见的目录结构，比如是否有 'src' 目录或者直接包含 go.mod 的目录
+          extracted_dir=$(find /tmp/nps-inspect -maxdepth 1 -type d -name "nps*" | head -1)
+          if [ -n "$extracted_dir" ]; then
+            echo "Main extracted directory found: $extracted_dir"
+            echo "Go files in main directory:"
+            find "$extracted_dir" -name "*.go" -type f | head -10
+            echo "Does this directory contain go.mod?"
+            [ -f "$extracted_dir/go.mod" ] && echo "Yes: $extracted_dir/go.mod" || echo "No go.mod found in top level."
+          else
+            echo "Could not identify the main extracted directory under /tmp/nps-inspect/"
+          fi
+
+      - name: Patch nps Makefile for Go build
+        run: |
+          cd openwrt-sdk/package/nps
+          echo "Patching nps Makefile for Go build issues..."
+          
+          # 检查并确保 GO_PKG 变量指向正确的模块路径
+          # 如果解压后的目录结构显示模块路径不同，需要更新 GO_PKG
+          # 例如，如果解压后发现顶层目录是 nps-0.26.26，且包含 go.mod，则模块路径可能在 go.mod 文件中定义
+          # 假设通过检查发现需要修改，以下是示例（请根据实际检查结果调整）：
+          # sed -i 's|GO_PKG:=ehang.io/nps|GO_PKG:=github.com/yisier/nps|' Makefile
+          
+          # 确保 GO_PKG_BUILD_PKG 指向包含main包的目录
+          # 通常 nps 的客户端是 cmd/npc，服务端是 cmd/nps
+          # 查找哪个目录包含主要的main.go
+          if grep -q "GO_PKG_BUILD_PKG:=.*cmd/npc" Makefile || grep -q "GO_PKG_BUILD_PKG:=.*cmd/nps" Makefile; then
+            echo "GO_PKG_BUILD_PKG seems to point to cmd directories."
+          else
+            echo "GO_PKG_BUILD_PKG might need adjustment. Current value:"
+            grep "GO_PKG_BUILD_PKG:=" Makefile || echo "GO_PKG_BUILD_PKG not found in Makefile"
+            # 尝试设置为常见的构建目标
+            # sed -i 's|GO_PKG_BUILD_PKG:=.*|GO_PKG_BUILD_PKG:=./cmd/...|' Makefile
+          fi
+          
+          # 检查是否启用了 Go modules，如果没有，可能需要设置
+          if ! grep -q "GO111MODULE" Makefile; then
+            echo "Adding GO111MODULE=on to enable Go modules..."
+            sed -i '/GO_PKG_LDFLAGS/i GO_PKG_VARS += GO111MODULE=on' Makefile
+          fi
+
+      - name: Install and configure Go toolchain (Ensure)
+        run: |
+          cd openwrt-sdk
+          echo "Ensuring Go toolchain is available and configured..."
+          
+          # 再次明确确保Go可用
+          if ! command -v go &> /dev/null; then
+            echo "Go command not found in PATH, installing..."
+            apt-get update
+            apt-get install -y golang-go
+          fi
+          
+          # 设置GOPATH和GOROOT，确保OpenWrt构建系统能找到
+          export GOPATH=/tmp/go
+          export GOROOT=/usr/lib/go
+          export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+          
+          echo "Current Go version:"
+          go version
+          echo "GOPATH is set to: $GOPATH"
+          echo "GOROOT is set to: $GOROOT"
+          
+          # 为OpenWrt构建系统创建必要的符号链接或环境设置
+          # 有时SDK自带的go工具链可能有问题，尝试链接到系统安装的go
+          mkdir -p ./staging_dir/host/bin
+          ln -sf $(which go) ./staging_dir/host/bin/go || true
+          
+          # 检查SDK的feeds中的golang包是否已安装
+          if [ ! -d "./feeds/packages/lang/golang" ]; then
+            echo "Golang feed package directory not found, attempting to install from feeds..."
+            ./scripts/feeds install golang
+          fi          
 
       - name: Build packages
         run: |
