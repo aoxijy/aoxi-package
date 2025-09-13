@@ -46,9 +46,9 @@ jobs:
       - name: Collect compiled ipks and compress
         run: |
           mkdir -p output
-          find openwrt-sdk/bin/packages/ -name "*.ipk" -exec cp {} output/ \;
+          find openwrt-sdk/bin/ -name "*.ipk" -exec cp {} output/ \; || true
           cd output
-          zip -r ../all-ipks.zip ./
+          zip -r ../all-ipks.zip ./* || zip -r ../all-ipks.zip .
           cd ..
 
       - name: Upload all compiled ipks as artifact
