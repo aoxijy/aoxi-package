@@ -1,7 +1,7 @@
 name: Build luci-app-npc for OpenWrt 24.10 Snapshot (x86_64)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发
   push:
     paths:
       - 'luci-app-npc/**'
@@ -121,8 +121,9 @@ jobs:
           cd openwrt-sdk
           make package/nps/clean 2>/dev/null || true
           
-          echo "Building npc package..."
-          FORCE=1 make package/npc/compile V=sc -j$(nproc)
+          echo "Building npc package (via nps Makefile)..."
+          # 注意：这里的目标是 nps，因为 PKG_NAME:=nps
+          FORCE=1 make package/nps/compile V=sc -j$(nproc)
           
           echo "Building luci-app-npc package..."
           FORCE=1 make package/luci-app-npc/compile V=sc -j$(nproc)
