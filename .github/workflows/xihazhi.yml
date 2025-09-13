@@ -1,4 +1,4 @@
-name: Build luci-app-npc for OpenWrt 24.10 Snapshot (x86_64)
+name: zuizhong
 
 on:
   workflow_dispatch: # 允许手动触发
