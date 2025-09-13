@@ -23,11 +23,11 @@ jobs:
       - name: Download OpenWrt SDK
         run: |
           OWRT_VERSION=23.05.3
-          ARCH=x86-64
           SDK_URL="https://downloads.openwrt.org/releases/${OWRT_VERSION}/targets/x86/64/openwrt-sdk-${OWRT_VERSION}-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
           wget $SDK_URL
           tar -xf openwrt-sdk-*.tar.xz
-          mv openwrt-sdk-* openwrt-sdk
+          SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
+          mv "$SDK_DIR" openwrt-sdk
 
       - name: Copy packages to SDK package directory
         run: |
