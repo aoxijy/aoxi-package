@@ -1,7 +1,7 @@
 name: Build luci-app-npc for OpenWrt 24.10 Snapshot (x86_64)
 
 on:
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
   push:
     paths:
       - 'luci-app-npc/**'
@@ -23,22 +23,40 @@ jobs:
       - name: Install dependencies (including Git and zstd)
         run: |
           apt-get update
+          # 安装 OpenWrt 构建所需的所有必要依赖
           apt-get install -y \
             build-essential \
+            clang \
+            gawk \
+            gcc-multilib \
+            g++-multilib \
+            gettext \
             libncurses5-dev \
             libncursesw5-dev \
-            zlib1g-dev \
-            gawk \
-            git \
-            gettext \
             libssl-dev \
-            xsltproc \
-            wget \
-            unzip \
-            python3 \
             python3-distutils \
+            rsync \
+            unzip \
+            zlib1g-dev \
             file \
-            zstd
+            wget \
+            git \
+            subversion \
+            quilt \
+            libelf-dev \
+            zstd \
+            ccache \
+            python3-setuptools \
+            python3-dev \
+            swig \
+            time \
+            ecj \
+            fastjar \
+            java-propose-classpath \
+            libxml2-utils \
+            xsltproc \
+            lib32z1-dev \
+            libc6-dev-i386
 
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
@@ -79,10 +97,11 @@ jobs:
           echo "Contents of package directory after linking:"
           ls -la package/ | grep -E "(nps|luci-app-npc)"
           
-          ./scripts/feeds update -a
-          ./scripts/feeds install libc
+          # 强制满足依赖检查
+          FORCE=1 ./scripts/feeds update -a
+          FORCE=1 ./scripts/feeds install libc
 
-      - name: Configure build
+      - name: Configure build (with FORCE=1)
         run: |
           cd openwrt-sdk
           echo "CONFIG_TARGET_x86_64=y" > .config
@@ -91,21 +110,22 @@ jobs:
           echo "CONFIG_PACKAGE_npc=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-npc-zh-cn=y" >> .config
           
-          make defconfig
+          # 使用 FORCE=1 跳过依赖检查
+          FORCE=1 make defconfig
           
           echo "Final configuration:"
           grep -E "(CONFIG_TARGET|CONFIG_PACKAGE)" .config
 
-      - name: Build packages
+      - name: Build packages (with FORCE=1)
         run: |
           cd openwrt-sdk
           make package/nps/clean 2>/dev/null || true
           
           echo "Building npc package..."
-          make package/npc/compile V=sc -j$(nproc)
+          FORCE=1 make package/npc/compile V=sc -j$(nproc)
           
           echo "Building luci-app-npc package..."
-          make package/luci-app-npc/compile V=sc -j$(nproc)
+          FORCE=1 make package/luci-app-npc/compile V=sc -j$(nproc)
 
       - name: Check build results
         run: |
