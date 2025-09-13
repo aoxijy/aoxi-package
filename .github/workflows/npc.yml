@@ -1,7 +1,7 @@
 name: Build luci-app-npc for OpenWrt 24.10 Snapshot (x86_64)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发
   push:
     paths:
       - 'luci-app-npc/**'
@@ -20,12 +20,7 @@ jobs:
       options: --privileged
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install dependencies (including zstd)
+      - name: Install dependencies (including Git and zstd)
         run: |
           apt-get update
           apt-get install -y \
@@ -44,6 +39,11 @@ jobs:
             python3-distutils \
             file \
             zstd
+
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Download OpenWrt 24.10 SDK (.tar.zst format)
         run: |
@@ -85,7 +85,6 @@ jobs:
       - name: Configure build
         run: |
           cd openwrt-sdk
-          # 使用多个 echo 命令而不是 EOF 块
           echo "CONFIG_TARGET_x86_64=y" > .config
           echo "CONFIG_TARGET_x86_64_Default=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-npc=y" >> .config
