@@ -1,4 +1,4 @@
-name: zuizhong
+name: Build luci-app-npc for OpenWrt 24.10 Snapshot (x86_64)
 
 on:
   workflow_dispatch: # 允许手动触发
@@ -55,7 +55,8 @@ jobs:
             libxml2-utils \
             xsltproc \
             lib32z1-dev \
-            libc6-dev-i386
+            libc6-dev-i386 \
+            golang-go  # 添加 Go 语言工具链
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -104,7 +105,6 @@ jobs:
           cd openwrt-sdk
           mkdir -p dl
           echo "Downloading nps source from GitHub..."
-          # 从 GitHub 下载 nps 源码包
           wget -O dl/nps-0.26.26.tar.gz https://github.com/yisier/nps/archive/refs/tags/v0.26.26.tar.gz
           
           if [ ! -s "dl/nps-0.26.26.tar.gz" ]; then
@@ -126,6 +126,39 @@ jobs:
           # 将哈希值保存到环境变量中，供后续步骤使用
           echo "HASH_VALUE=$HASH_VALUE" >> $GITHUB_ENV
 
+      - name: Install and configure Go toolchain
+        run: |
+          cd openwrt-sdk
+          echo "Installing and configuring Go toolchain..."
+          
+          # 检查并安装 Go 工具链
+          if ! command -v go &> /dev/null; then
+            echo "Go is not installed, installing..."
+            apt-get update
+            apt-get install -y golang-go
+          fi
+          
+          echo "Go version:"
+          go version
+          
+          # 设置 GOPATH 和 GOROOT
+          export GOPATH=/tmp/go
+          export GOROOT=/usr/lib/go
+          export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+          
+          echo "GOPATH: $GOPATH"
+          echo "GOROOT: $GOROOT"
+          echo "PATH: $PATH"
+          
+          # 创建必要的目录
+          mkdir -p $GOPATH/src $GOPATH/bin $GOPATH/pkg
+          
+          # 设置 Go 模块代理（可选，但可以加速下载）
+          go env -w GOPROXY=https://goproxy.cn,direct
+          go env -w GOSUMDB=off
+          
+          echo "Go environment configured"
+
       - name: Configure build
         run: |
           cd openwrt-sdk
@@ -146,6 +179,11 @@ jobs:
           make package/nps/clean 2>/dev/null || true
           
           echo "Building npc package..."
+          # 设置 Go 环境变量
+          export GOPATH=/tmp/go
+          export GOROOT=/usr/lib/go
+          export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+          
           FORCE=1 make package/nps/compile V=ss -j1
           
           echo "Building luci-app-npc package..."
