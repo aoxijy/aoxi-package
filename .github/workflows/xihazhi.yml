@@ -43,8 +43,16 @@ jobs:
             [ -d "$pkg" ] && make package/$(basename $pkg)/compile V=s || true
           done
 
-      - name: Upload built packages
+      - name: Collect compiled ipks and compress
+        run: |
+          mkdir -p output
+          find openwrt-sdk/bin/packages/ -name "*.ipk" -exec cp {} output/ \;
+          cd output
+          zip -r ../all-ipks.zip ./
+          cd ..
+
+      - name: Upload all compiled ipks as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openwrt-amd64-packages
-          path: openwrt-sdk/bin/packages/
+          name: openwrt-amd64-ipks
+          path: all-ipks.zip
