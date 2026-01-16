@@ -6,7 +6,7 @@ function index()
 		return
 	end
                   
-        entry({"admin", "services", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
+        entry({"admin", "services", "easytier"}, alias("admin", "services", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
 	entry({"admin", "services", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
 	entry({"admin", "services",  "easytier",  "easytier_log"}, form("easytier_log"),_("core log"), 48).leaf = true
 	entry({"admin", "services", "easytier", "get_log"}, call("get_log")).leaf = true
