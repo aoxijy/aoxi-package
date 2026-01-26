@@ -63,6 +63,7 @@ jobs:
           "luci-app-npc": "https://github.com/aoxijy/aoxi-package",
           "luci-app-shutdown": "https://github.com/aoxijy/aoxi-package",
           "luci-app-vlmcsd": "https://github.com/DokiDuck/luci-app-vlmcsd",
+          "luci-app-turboacc": "https://github.com/chenmozhijin/turboacc luci",
           "luci-app-nikki": "https://github.com/db-one/dbone-packages 23.05",
           "luci-app-ssr-plus": "https://github.com/db-one/dbone-packages 23.05",
           "luci-app-passwall": "https://github.com/db-one/dbone-packages 23.05"
