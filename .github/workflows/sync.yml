@@ -71,6 +71,7 @@ jobs:
         SUBDIRS_JSON: '{
           "luci-app-argon-config": "luci-app-argon-config",
           "luci-theme-argon": "luci-theme-argon",
+          "luci-app-turboacc": "luci-app-turboacc",
           "luci-theme-neobird": "luci-theme-design",
           "luci-app-design-config": "luci-app-design-config",
           "luci-app-dockerman": "luci-app-dockerman",
