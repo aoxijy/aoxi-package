@@ -31,10 +31,7 @@ msgid ""
 "%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" "
 "target=\"_blank\">QQ Group</a>&nbsp;&nbsp;">Beginner Tutorial</a>"
 msgstr ""
-"一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 "
-"项目地址：<a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
-"<a href=\"http://easytier.cn\" target=\"_blank\">官网文档</a>&nbsp;&nbsp;"
-"<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ群</a>&nbsp;&nbsp;"
+
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:720
 msgid "API Port"
 msgstr "API端口"
@@ -491,8 +488,6 @@ msgid ""
 "Initial connected peer nodes (-p "
 "parameter)<br>Public server status check: <a href='https://uptime.easytier.cn' target='_blank'>Click here to check</a>"
 msgstr ""
-"初始连接的对等节点 (-p 参数）<br>公共服务器可用状态查询："
-"<a href='https://uptime.easytier.cn' target='_blank'>点此查询</a>"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:206
 msgid "Instance Name"
@@ -619,10 +614,6 @@ msgid ""
 "\">https://easytier.cn/web/index.html#/config_generator</a><br>Please note "
 "to set the RPC port to 15888"
 msgstr ""
-"官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a><br>"
-"官方配置文件生成器：<a href='https://easytier.cn/web/index.html#/config_generator' "
-"target='_blank'>https://easytier.cn/web/index.html#/config_generator</a><br>"
-"注意配置RPC端口为15888"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:295
 msgid ""
@@ -926,8 +917,6 @@ msgid ""
 "official Web server, use the format: username<br>Official Web Console: <a "
 "href='https://easytier.cn/web'>easytier.cn/web</a>"
 msgstr ""
-"Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>"
-"官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a>"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
 msgid ""
@@ -963,9 +952,6 @@ msgid ""
 "specified, the program will be automatically moved to that path when started."
 "<br>"
 msgstr ""
-"可直接上传二进制程序easytier-core和easytier-cli或者以.zip结尾的压缩包,上传新版本会自动覆盖旧版本，下载地址："
-"<a href='https://github.com/EasyTier/EasyTier/releases' target='_blank'>github.com/EasyTier/EasyTier</a><br>"
-"上传的文件将会保存在/tmp文件夹里，如果自定义了程序路径那么启动程序时将会自动移至自定义的路径<br>"
 
 #: applications/luci-app-easytier/luasrc/controller/easytier.lua:11
 msgid "core log"
