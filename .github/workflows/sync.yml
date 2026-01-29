@@ -52,7 +52,6 @@ jobs:
         REPOS_JSON: '{
           "luci-app-argon-config": "https://github.com/jerrykuku/luci-app-argon-config",
           "luci-theme-argon": "https://github.com/jerrykuku/luci-theme-argon",
-          "luci-theme-neobird": "https://github.com/papagaye744/luci-theme-design",
           "luci-app-design": "https://github.com/papagaye744/luci-theme-design js",
           "luci-app-dockerman": "https://github.com/lisaac/luci-app-dockerman",
           "luci-app-poweroff": "https://github.com/esirplayground/luci-app-poweroff",
