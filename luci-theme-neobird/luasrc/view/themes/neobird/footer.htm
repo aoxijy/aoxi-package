@@ -1,4 +1,4 @@
-<%#
+<?#
     Material is a clean HTML5 theme for LuCI. It is based on luci-theme-bootstrap and MUI
 
     luci-theme-material
@@ -19,38 +19,51 @@
     https://github.com/muicss/mui
 
     Licensed to the public under the Apache License 2.0
--%>
+#?>
 
-<%
-	local ver = require "luci.version"
-	local disp = require "luci.dispatcher"
-	local request  = disp.context.path
-	local category = request[1]
-	local tree = disp.node()
-	local categories = disp.node_childs(tree)
+<?
+    let ver = require("luci.version");
+    let disp = require("luci.dispatcher");
+    let http = require("luci.http");
+    let request = disp.context.path;
+    let category = request[0];
+    
+    // 获取菜单树（新版 API）
+    let tree = disp.get_menu_tree();
+    let categories = [];
+    if (tree) {
+        for (let i = 0; i < tree.length; i++) {
+            let item = tree[i];
+            categories.push({
+                name: item.name,
+                title: item.title,
+                path: item.path
+            });
+        }
+    }
 %>
                 </div>
                 <footer class="footer" style="text-align:center">
-                    <a href="https://github.com/openwrt/luci">Powered by <%= ver.luciname %></a> |
-                    <a href="https://www.lede-project.org/"><%= ver.distversion %></a>
+                    <a href="https://github.com/openwrt/luci">Powered by <?=ver.luciname?></a> |
+                    <a href="https://www.lede-project.org/"><?=ver.distversion?></a>
                     <br />
                     © 2021-2022 2smile. All Rights Reserved.
-                    <% if #categories > 1 then %>
+                    <? if (categories.length > 1) { ?>
                     <ul class="breadcrumb pull-right" id="modemenu">
-                        <% for i, r in ipairs(categories) do %>
-                        <li<% if request[1] == r then %> class="active"<%end%>><a href="<%=controller%>/<%=r%>/"><%=striptags(translate(tree.nodes[r].title))%></a> <span class="divider">|</span></li>
-                        <% end %>
+                        <? for (let i = 0; i < categories.length; i++) { let r = categories[i]; ?>
+                        <li<? if (request[0] == r.name) { ?> class="active"<? } ?>><a href="<?=controller?>/<?=r.name?>/"><?=striptags(translate(r.title))?></a> <span class="divider">|</span></li>
+                        <? } ?>
                     </ul>
-                    <% end %>
+                    <? } %>
                 </footer>
             </div>
         </div>
 
     <script>
         // thanks for Jo-Philipp Wich <jow@openwrt.org>
-        var luciLocation = <%= luci.http.write_json(luci.dispatcher.context.path) %>;
+        var luciLocation = <?=http.write_json(disp.context.path)?>;
     </script>
-    <script src="<%=media%>/js/jquery.min.js?v=<%= ver.luciversion %>"></script>
-    <script src="<%=media%>/js/script.js?v=<%= ver.luciversion %>"></script>
+    <script src="<?=media?>/js/jquery.min.js?v=<?=ver.luciversion?>"></script>
+    <script src="<?=media?>/js/script.js?v=<?=ver.luciversion?>"></script>
 </body>
 </html>
