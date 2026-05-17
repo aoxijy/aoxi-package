@@ -3,16 +3,16 @@ name: Build luci-app-npc (x86_64)
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths:
       - 'luci-app-npc/**'
       - 'nps/**'
       - '.github/workflows/build-luci-app-npc.yml'
 
 env:
-  SDK_VERSION: 23.05.4
+  SDK_VERSION: 21.02.7                          # 兼容 GoBinPackage 的稳定版本
   TARGET: x86/64
-  SDK_URL: https://downloads.openwrt.org/releases/23.05.4/targets/x86/64/openwrt-sdk-23.05.4-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+  SDK_URL: https://downloads.openwrt.org/releases/21.02.7/targets/x86/64/openwrt-sdk-21.02.7-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz
   SDK_DIR: openwrt-sdk
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.SDK_DIR }}
-          key: openwrt-sdk-${{ env.SDK_VERSION }}-x86-64-v4   # 版本号更新以强制刷新
+          key: openwrt-sdk-${{ env.SDK_VERSION }}-x86-64-v6   # 新缓存键，避免旧错误缓存
 
       - name: Download and extract SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
@@ -57,7 +57,15 @@ jobs:
           ./scripts/feeds update packages luci
           ./scripts/feeds install -a -p packages
           ./scripts/feeds install -a -p luci
+          # golang 和 upx 是 nps 的编译依赖
           ./scripts/feeds install golang upx
+          make defconfig
+
+      - name: Enable required packages
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          echo "CONFIG_PACKAGE_npc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-npc=y" >> .config
           make defconfig
 
       - name: Build packages
