@@ -1,0 +1,77 @@
+# .github/workflows/build-luci-app-npc.yml
+name: Build luci-app-npc (x86_64)
+
+on:
+  workflow_dispatch:          # 手动触发
+  push:
+    branches: [ main ]        # 按需修改分支名
+    paths:
+      - 'luci-app-npc/**'
+      - 'nps/**'
+      - '.github/workflows/build-luci-app-npc.yml'
+
+env:
+  SDK_VERSION: 23.05.4
+  TARGET: x86/64
+  SDK_URL: https://downloads.openwrt.org/releases/23.05.4/targets/x86/64/openwrt-sdk-23.05.4-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+  SDK_DIR: openwrt-sdk
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential libncurses-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3
+
+      - name: Cache OpenWrt SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SDK_DIR }}
+          key: openwrt-sdk-${{ env.SDK_VERSION }}-x86-64-v3
+
+      - name: Download and extract SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          wget -q -O sdk.tar.xz "$SDK_URL"
+          mkdir -p "$SDK_DIR"
+          tar -xf sdk.tar.xz -C "$SDK_DIR" --strip-components=1
+          rm sdk.tar.xz
+
+      - name: Copy package sources
+        run: |
+          mkdir -p $SDK_DIR/package/luci-app-npc
+          mkdir -p $SDK_DIR/package/nps
+          cp -r luci-app-npc/* $SDK_DIR/package/luci-app-npc/
+          cp -r nps/* $SDK_DIR/package/nps/
+
+      - name: Update feeds and install dependencies
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          ./scripts/feeds update packages luci
+          ./scripts/feeds install golang upx
+
+      - name: Build packages
+        working-directory: ${{ env.SDK_DIR }}
+        run: |
+          # 依次编译 npc（依赖）和 luci-app-npc
+          make package/npc/compile V=s -j$(nproc)
+          make package/luci-app-npc/compile V=s -j$(nproc)
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          find $SDK_DIR/bin/packages/${{ env.TARGET }}/ -name "*.ipk" -exec cp {} artifacts/ \;
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-npc-x86_64
+          path: artifacts/
