@@ -1,10 +1,9 @@
-# .github/workflows/build-luci-app-npc.yml
 name: Build luci-app-npc (x86_64)
 
 on:
-  workflow_dispatch:          # 手动触发
+  workflow_dispatch:
   push:
-    branches: [ master ]        # 按需修改分支名
+    branches: [ master ]
     paths:
       - 'luci-app-npc/**'
       - 'nps/**'
@@ -35,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.SDK_DIR }}
-          key: openwrt-sdk-${{ env.SDK_VERSION }}-x86-64-v3
+          key: openwrt-sdk-${{ env.SDK_VERSION }}-x86-64-v4   # 版本号更新以强制刷新
 
       - name: Download and extract SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
@@ -56,12 +55,14 @@ jobs:
         working-directory: ${{ env.SDK_DIR }}
         run: |
           ./scripts/feeds update packages luci
+          ./scripts/feeds install -a -p packages
+          ./scripts/feeds install -a -p luci
           ./scripts/feeds install golang upx
+          make defconfig
 
       - name: Build packages
         working-directory: ${{ env.SDK_DIR }}
         run: |
-          # 依次编译 npc（依赖）和 luci-app-npc
           make package/npc/compile V=s -j$(nproc)
           make package/luci-app-npc/compile V=s -j$(nproc)
 
