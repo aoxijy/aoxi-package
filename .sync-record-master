@@ -6,7 +6,6 @@ luci-app-npc 65988bcd9b59732e8b9a093dd98f520e2465c7ae
 luci-app-openclash c3a33c1d3407956fdf8f0e0b7c1a4c52e6ad9593
 luci-app-passwall 7a505a155767b41883e92c6be10788b5b1436985
 luci-app-poweroff af21d4145f169bcbcf6fbfb30aeed5c927bf0fd3
-luci-app-shutdown 65988bcd9b59732e8b9a093dd98f520e2465c7ae
 luci-app-ssr-plus 7a505a155767b41883e92c6be10788b5b1436985
 luci-app-turboacc 530092c532839efb96e9f328d34dbf3adff4b557
 luci-app-vlmcsd f59f1fba9c74b5b119e7614a8a85fca6b83dd747
